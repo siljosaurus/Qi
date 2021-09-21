@@ -1,19 +1,19 @@
-void setup() {
-  // put your setup code here, to run once:
-  Serial.begin();
+#include <Adafruit_NeoPixel.h>
 
+int slange_pin = A0;
+int leds_i_slange = 5;
+Adafruit_NeoPixel slange = Adafruit_NeoPixel(leds_i_slange, slange_pin,NEO_GRB + NEO_KHZ800);
+
+
+void setup() {
+  slange.begin();
+  slange.show();
 }
 
- 
-
-int neoPin = 2; //input på digital
-int maxPixels = 6;
-int num_leds_to_show = 0;
-int battery = antPixels;
-
- 
 
 void loop() {
+  Styr_batteriet();
+  
   //sjekke om noen tar på metal nylon fabric sheet
   //sjekke om noen lyser på designerte plasser
   //sjekke om noen lader
@@ -21,19 +21,19 @@ void loop() {
   //justere batteriet ut fra input
   //vise batterinivå
 
- 
-
-  if (lader){
-  batterilevel -1
-  }
-
- 
-
+  //if (lader){
+  //batterilevel -1
+  //}
 }
 
  
 
-void Styr_Batteriet(){
+void Styr_batteriet(){
+  for (int i= 0; i<leds_i_slange; i++) {
+    slange.setPixelColor(i, 0, 0, 255);
+    slange.show();
+    }
+  
   /*if (batterilevel == 0){
     //ingen lys
   }
@@ -49,16 +49,16 @@ void Styr_Batteriet(){
 
 void Gi_varme(){
   //funksjon for å gi varme ved registrering, hvordan peltier skal oppføre seg ved interaksjon
-  < 5 sek: level 1 (kaldest, romtemp)
-  < 10 && > 5 sek: level 2 (litt varmt)
-  < 15 && > 10 sek: level 3 (varmest)
+  //< 5 sek: level 1 (kaldest, romtemp)
+  //< 10 && > 5 sek: level 2 (litt varmt)
+  //< 15 && > 10 sek: level 3 (varmest)
 }
 
  
 
 boolean Registrer_touch(){
   //if true kall på Gi_varme()
-  return true  
+  //return true  
 }
 
  
