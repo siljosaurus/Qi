@@ -2,7 +2,7 @@
 
 #include <Adafruit_NeoPixel.h>
 
-int silje = 1;
+int claudia = 1;
 
 int slange_pin = A0;
 int leds_i_slange = 5;
