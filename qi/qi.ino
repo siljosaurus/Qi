@@ -7,12 +7,14 @@
 int slange_pin = A0;
 int leds_i_slange = 5;
 Adafruit_NeoPixel slange = Adafruit_NeoPixel(leds_i_slange, slange_pin,NEO_GRB + NEO_KHZ800);
-CapacitiveSensor touch = CapacitiveSensor(4,2) // 1M resistor, 2 er sensor pin
+CapacitiveSensor touch = CapacitiveSensor(4,2); // 1M resistor between pins 4 & 2, pin 2 is sensor pin
 
 
 void setup() {
   slange.begin();
   slange.show();
+  touch.set_CS_AutocaL_Millis(0xFFFFFFFF);
+  Serial.begin(9600);
 }
 
 
@@ -30,6 +32,7 @@ void loop() {
   //if (lader){
   //batterilevel -1
   //}
+  delay(100);
 }
 
  
@@ -63,8 +66,12 @@ void Gi_varme(){
  
 
 boolean Registrer_touch(){
-  //if true kall på Gi_varme()
-  //return true  
+  long total = touch.capacitiveSensor(30);
+  
+  if (total > 50) {
+    Gi_varme();
+    return true;
+    }
 }
 
  
