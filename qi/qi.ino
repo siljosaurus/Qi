@@ -1,11 +1,13 @@
 #include <Adafruit_NeoPixel.h>
+
 #include <Adafruit_NeoPixel.h>
 
-int batteri = 0; // dette er en skala hvor 0 er shutdown, og 9 er fullt.
+#include <CapacitiveSensor.h>
 
 int slange_pin = A0;
 int leds_i_slange = 5;
 Adafruit_NeoPixel slange = Adafruit_NeoPixel(leds_i_slange, slange_pin,NEO_GRB + NEO_KHZ800);
+CapacitiveSensor touch = CapacitiveSensor(4,2) // 1M resistor, 2 er sensor pin
 
 
 void setup() {
@@ -30,31 +32,7 @@ void loop() {
   //}
 }
 
-
-void Batteriet_lades_opp() {}
-void Batteriet_lades_ned(){}
-void Batteriet_kollapser(){}
-
-
-void Batteri_fullt(){
-  // batteri = 9
-  }
-  
-void Batteri_halvfullt(){
-  // batteri = mellom 4 og 8
-  }
-  
-void Batteri_lavt(){
-  // batteri = mellom 3 og 1
-  }
-  
-void Batteri_shutdowm(){
-  // batteri = 0
-  }
-
-
-
-
+ 
 
 void Styr_batteriet(){
   for (int i= 0; i<leds_i_slange; i++) {
@@ -62,13 +40,13 @@ void Styr_batteriet(){
     slange.show();
     }
   
-  /*if (batteri == 0){
+  /*if (batterilevel == 0){
     //ingen lys
   }
-  else if (batteri > 0 && < 5){
+  else if (batterilevel > 0 && < 5){
     //medium lys / halvparten 
   }
-  else if (batteri > 5 && < 10){
+  else if (batterilevel > 5 && < 10){
     //sterkt lys / alle lys
   }*/
 }
@@ -76,9 +54,6 @@ void Styr_batteriet(){
  
 
 void Gi_varme(){
-  // ant_aktive_stasjoner = ant_aktive_stasjoner + 1;
-  // starte en tidsteller, slik at vi vet hvor lenge den har vært aktivert.
-  
   //funksjon for å gi varme ved registrering, hvordan peltier skal oppføre seg ved interaksjon
   //< 5 sek: level 1 (kaldest, romtemp)
   //< 10 && > 5 sek: level 2 (litt varmt)
