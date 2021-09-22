@@ -4,6 +4,8 @@
 
 #include <CapacitiveSensor.h>
 
+int batteri = 0; // dette er en skala hvor 0 er shutdown, og 9 er fullt.
+
 int slange_pin = A0;
 int leds_i_slange = 5;
 Adafruit_NeoPixel slange = Adafruit_NeoPixel(leds_i_slange, slange_pin,NEO_GRB + NEO_KHZ800);
@@ -54,6 +56,27 @@ void Styr_batteriet(){
   }*/
 }
 
+
+void Batteriet_lades_opp() {}
+void Batteriet_lades_ned(){}
+void Batteriet_kollapser(){}
+
+void Batteri_fullt(){
+  // batteri = 9
+  }
+  
+void Batteri_halvfullt(){
+  // batteri = mellom 4 og 8
+  }
+  
+void Batteri_lavt(){
+  // batteri = mellom 3 og 1
+  }
+  
+void Batteri_shutdowm(){
+  // batteri = 0
+  }
+
  
 
 void Gi_varme(){
@@ -76,7 +99,18 @@ boolean Registrer_touch(){
 
  
 
-void Lyssensor(){
+void Photoresistor(){
+  
+  photocellReading = analogRead(photocellPin);
+  Serial.print("Analog reading = ");
+  Serial.println(photocellReading);
+
+  //photocellReading = 1023 - photocellReading;
+  LEDbrightness = map(photocellReading, 0, 210, 0, 255);
+  Serial.println(LEDbrightness);
+  analogWrite(LEDpin, LEDbrightness);
+  delay(100);
+  
   //registrer mengde lys som blir sendt inn
  //lengde man gir lys gir batteriet mer/mindre energi
  // < 5 sek: level 1 (kaldest, romtemp)
