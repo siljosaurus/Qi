@@ -1,8 +1,7 @@
 #include <Adafruit_NeoPixel.h>
-
 #include <Adafruit_NeoPixel.h>
 
-int claudia = 1;
+int batteri = 0; // dette er en skala hvor 0 er shutdown, og 9 er fullt.
 
 int slange_pin = A0;
 int leds_i_slange = 5;
@@ -31,7 +30,31 @@ void loop() {
   //}
 }
 
- 
+
+void Batteriet_lades_opp() {}
+void Batteriet_lades_ned(){}
+void Batteriet_kollapser(){}
+
+
+void Batteri_fullt(){
+  // batteri = 9
+  }
+  
+void Batteri_halvfullt(){
+  // batteri = mellom 4 og 8
+  }
+  
+void Batteri_lavt(){
+  // batteri = mellom 3 og 1
+  }
+  
+void Batteri_shutdowm(){
+  // batteri = 0
+  }
+
+
+
+
 
 void Styr_batteriet(){
   for (int i= 0; i<leds_i_slange; i++) {
@@ -39,13 +62,13 @@ void Styr_batteriet(){
     slange.show();
     }
   
-  /*if (batterilevel == 0){
+  /*if (batteri == 0){
     //ingen lys
   }
-  else if (batterilevel > 0 && < 5){
+  else if (batteri > 0 && < 5){
     //medium lys / halvparten 
   }
-  else if (batterilevel > 5 && < 10){
+  else if (batteri > 5 && < 10){
     //sterkt lys / alle lys
   }*/
 }
@@ -53,6 +76,9 @@ void Styr_batteriet(){
  
 
 void Gi_varme(){
+  // ant_aktive_stasjoner = ant_aktive_stasjoner + 1;
+  // starte en tidsteller, slik at vi vet hvor lenge den har vært aktivert.
+  
   //funksjon for å gi varme ved registrering, hvordan peltier skal oppføre seg ved interaksjon
   //< 5 sek: level 1 (kaldest, romtemp)
   //< 10 && > 5 sek: level 2 (litt varmt)
