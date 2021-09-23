@@ -37,6 +37,7 @@ void setup() {
 
 void loop(void) {
   total = 0;
+  /*
   if (Registrer_touch()) {
     Gi_varme();
     Serial.println("gir varme");
@@ -44,6 +45,11 @@ void loop(void) {
       Stopp_varme();
       Serial.println("stopper varme");
       }
+     */
+   if (Lad_mobil()) {
+    Serial.println("lader");
+    }
+    
    delay(1000);
   //Solcelle();
   // Styr_batteriet();
@@ -224,10 +230,14 @@ void Solcelle(){
  
 
 boolean Lad_mobil(){
+  pressure_reading = analogRead(pressure_pin);
+  Serial.println(pressure_reading);
   if (pressure_reading > 0) {
-    Batteriet_kollapser();
+    //Batteriet_kollapser();
     return true;
-    }
+    } else {
+      return false;
+      }
   //lader en mobil i et gitt tidsrom, hvis lenger kutt strømmen
 }
 
