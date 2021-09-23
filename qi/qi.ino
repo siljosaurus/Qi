@@ -8,19 +8,20 @@ int batteri = 0; // dette er en skala hvor 0 er shutdown, og 9 er fullt.
 
 //int slange_pin = A0;
 
+int photocellPin = A0;
+int photocellReading;
 int leds_i_solcelleslange = 60;
 int aktive_leds_i_solcelleslange = 0;
+int LEDpin = 11;
+int LEDbrightness;
+unsigned long prev = 0;
 
 int pressure_pin = A1;
 int pressure_reading; //variable for storing our reading
 
-int photocellPin = A0;
-int photocellReading;
-int LEDpin = 11;
-int LEDbrightness;
-long total = 0;
-
 int varmePin = 10;
+unsigned long varmeTid = 200; // lavere verdi blir til varmere peltier
+
 //Adafruit_NeoPixel slange = Adafruit_NeoPixel(leds_i_slange, slange_pin,NEO_GRB + NEO_KHZ800);
 Adafruit_NeoPixel solcelle_slange = Adafruit_NeoPixel(leds_i_solcelleslange, LEDpin,NEO_GRB + NEO_KHZ800);
 CapacitiveSensor touch = CapacitiveSensor(4,2); // 1M resistor between pins 4 & 2, pin 2 is sensor pin
@@ -36,8 +37,6 @@ void setup() {
 
 
 void loop(void) {
-  total = 0;
-  /*
   if (Registrer_touch()) {
     Gi_varme();
     Serial.println("gir varme");
@@ -45,7 +44,7 @@ void loop(void) {
       Stopp_varme();
       Serial.println("stopper varme");
       }
-     */
+   
    if (Lad_mobil()) {
     Serial.println("lader");
     }
@@ -60,11 +59,6 @@ void loop(void) {
   //sjekke om noen skrur på en lyspære
   //justere batteriet ut fra input
   //vise batterinivå
-
-  //if (lader){
-  //batterilevel -1
-  //}
-  //delay(100);
 }
 
  
@@ -108,7 +102,7 @@ void Batteriet_lades_ned() {
   
 void Batteriet_kollapser() {
     //skjer kun ved mobillading
-    //if (batteri == 0) {}
+    //if (batteri == 0) {kollaps}
     //else {Batteriet_lades_ned();}
   }
 
@@ -128,15 +122,11 @@ void Batteri_shutdown(){
   // batteri = 0
   }
 
-unsigned long varmeTid = 0;
-
 void Gi_varme(){
   //Batteriet_lades_opp();
-  if (millis() % 2000 > 1000) {
-    Serial.println("aktiv");
+  if (millis() % 2000 > varmeTid) {
     digitalWrite(varmePin, HIGH);
     } else {
-      Serial.println("inactive");
       digitalWrite(varmePin, LOW);
       }
   
@@ -153,21 +143,16 @@ void Stopp_varme() {
  
 
 boolean Registrer_touch(){
-  total = touch.capacitiveSensor(30);
+  long total = touch.capacitiveSensor(30);
   Serial.println(total);
-  
   if (total > 200) {
     return true;
     } else {
       return false;
       }
 }
-
- 
-unsigned long prev = 0;
  
 void Solcelle(){
-  
   int photocellReading = analogRead(photocellPin);
   Serial.print("Analog reading = ");
   Serial.println(photocellReading);
@@ -203,21 +188,11 @@ void Solcelle(){
       // batteri_ladesoppeller ned
     }
 
-
-
     for (int i=0; i < leds_i_solcelleslange; i++){
       if (i <= num_leds_to_show){
-        Serial.print("!");
         solcelle_slange.setPixelColor(i, solcelle_slange.Color(0, 150, 0));
-        /*if (i <= 40){
-          pixels[i] = (0, 100, 50);
-        }
-        else{
-          pixels[i] = (255, 255, 0);
-        }*/
       }
        else{
-        Serial.print(".");
           solcelle_slange.setPixelColor(i, solcelle_slange.Color(0, 0, 0));
         }
     
@@ -227,7 +202,6 @@ void Solcelle(){
   
 }
 
- 
 
 boolean Lad_mobil(){
   pressure_reading = analogRead(pressure_pin);
@@ -238,7 +212,6 @@ boolean Lad_mobil(){
     } else {
       return false;
       }
-  //lader en mobil i et gitt tidsrom, hvis lenger kutt strømmen
 }
 
  
