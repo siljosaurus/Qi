@@ -13,10 +13,14 @@ int aktive_leds_i_solcelleslange = 0;
 
 int pressure_pin = A1;
 int pressure_reading; //variable for storing our reading
+
 int photocellPin = A0;
 int photocellReading;
 int LEDpin = 11;
 int LEDbrightness;
+long total = 0;
+
+int varmePin = 10;
 //Adafruit_NeoPixel slange = Adafruit_NeoPixel(leds_i_slange, slange_pin,NEO_GRB + NEO_KHZ800);
 Adafruit_NeoPixel solcelle_slange = Adafruit_NeoPixel(leds_i_solcelleslange, LEDpin,NEO_GRB + NEO_KHZ800);
 CapacitiveSensor touch = CapacitiveSensor(4,2); // 1M resistor between pins 4 & 2, pin 2 is sensor pin
@@ -27,12 +31,21 @@ void setup() {
   //slange.begin();
   solcelle_slange.begin();
   touch.set_CS_AutocaL_Millis(0xFFFFFFFF);
-  
+  pinMode(varmePin, OUTPUT);
 }
 
 
 void loop(void) {
-  Solcelle();
+  total = 0;
+  if (Registrer_touch()) {
+    Gi_varme();
+    Serial.println("gir varme");
+    } else {
+      Stopp_varme();
+      Serial.println("stopper varme");
+      }
+   delay(1000);
+  //Solcelle();
   // Styr_batteriet();
   
   //sjekke om noen tar på metal nylon fabric sheet
@@ -109,25 +122,39 @@ void Batteri_shutdown(){
   // batteri = 0
   }
 
- 
+unsigned long varmeTid = 0;
 
 void Gi_varme(){
-  Batteriet_lades_opp();
+  //Batteriet_lades_opp();
+  if (millis() % 2000 > 1000) {
+    Serial.println("aktiv");
+    digitalWrite(varmePin, HIGH);
+    } else {
+      Serial.println("inactive");
+      digitalWrite(varmePin, LOW);
+      }
+  
   //funksjon for å gi varme ved registrering, hvordan peltier skal oppføre seg ved interaksjon
   //< 5 sek: level 1 (kaldest, romtemp)
   //< 10 && > 5 sek: level 2 (litt varmt)
   //< 15 && > 10 sek: level 3 (varmest)
 }
 
+void Stopp_varme() {
+  digitalWrite(varmePin, LOW);
+}
+
  
 
 boolean Registrer_touch(){
-  long total = touch.capacitiveSensor(30);
+  total = touch.capacitiveSensor(30);
+  Serial.println(total);
   
-  if (total > 50) {
-    Gi_varme();
+  if (total > 200) {
     return true;
-    }
+    } else {
+      return false;
+      }
 }
 
  
