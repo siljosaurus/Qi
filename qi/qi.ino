@@ -6,9 +6,10 @@
 
 int batteri = 0; // dette er en skala hvor 0 er shutdown, og 9 er fullt.
 
-//int slange_pin = A0;
+int slange_pin = A0;
+int leds_i_slange = 60;
 
-int photocellPin = A0;
+int photocellPin = A1;
 int photocellReading;
 int leds_i_solcelleslange = 60;
 int aktive_leds_i_solcelleslange = 0;
@@ -16,23 +17,29 @@ int LEDpin = 11;
 int LEDbrightness;
 unsigned long prev = 0;
 
-int pressure_pin = A1;
+int pressure_pin = A2;
 int pressure_reading; //variable for storing our reading
 
 int varmePin = 10;
 unsigned long varmeTid = 200; // lavere verdi blir til varmere peltier
+int sensitivity = 200;
 
-//Adafruit_NeoPixel slange = Adafruit_NeoPixel(leds_i_slange, slange_pin,NEO_GRB + NEO_KHZ800);
+int lader = 6;
+
+Adafruit_NeoPixel slange = Adafruit_NeoPixel(leds_i_slange, slange_pin,NEO_GRB + NEO_KHZ800);
+Adafruit_NeoPixel slange2 = Adafruit_NeoPixel(leds_i_slange, slange_pin,NEO_GRBW + NEO_KHZ800);
 Adafruit_NeoPixel solcelle_slange = Adafruit_NeoPixel(leds_i_solcelleslange, LEDpin,NEO_GRB + NEO_KHZ800);
 CapacitiveSensor touch = CapacitiveSensor(4,2); // 1M resistor between pins 4 & 2, pin 2 is sensor pin
 
 
 void setup() {
   Serial.begin(9600);
-  //slange.begin();
+  slange.begin();
+  slange2.begin();
   solcelle_slange.begin();
   touch.set_CS_AutocaL_Millis(0xFFFFFFFF);
   pinMode(varmePin, OUTPUT);
+  pinMode(lader, OUTPUT);
 }
 
 
@@ -45,11 +52,16 @@ void loop(void) {
       Serial.println("stopper varme");
       }
    
-   if (Lad_mobil()) {
+   if (Registrer_mobil()) {
+    lad();
     Serial.println("lader");
-    }
+    } else {
+      stopp_Lading();
+      Serial.println("lader ikke");
+      }
 
    pulseWhite(10);
+   gradientRed(10);
     
    delay(1000);
   //Solcelle();
@@ -131,6 +143,17 @@ void Batteri_shutdown(){
   // ingen lys
   }
 
+boolean Registrer_touch(){
+  long total = touch.capacitiveSensor(30);
+  Serial.println(total);
+  
+  if (total > sensitivity) {
+    return true;
+    } else {
+      return false;
+      }
+}
+
 void Gi_varme(){
   //Batteriet_lades_opp();
   if (millis() % 2000 > varmeTid) {
@@ -149,17 +172,28 @@ void Stopp_varme() {
   digitalWrite(varmePin, LOW);
 }
 
- 
 
-boolean Registrer_touch(){
-  long total = touch.capacitiveSensor(30);
-  Serial.println(total);
-  if (total > 200) {
+boolean Registrer_mobil(){
+  pressure_reading = analogRead(pressure_pin);
+  Serial.println(pressure_reading);
+  
+  if (pressure_reading > 0) {
+    //Batteriet_kollapser();
     return true;
     } else {
       return false;
       }
 }
+
+void lad() {
+  digitalWrite(lader, HIGH);
+}
+
+
+void stopp_Lading() {
+  digitalWrite(lader, LOW);
+}
+
  
 void Solcelle(){
   int photocellReading = analogRead(photocellPin);
@@ -210,19 +244,6 @@ void Solcelle(){
   }
   
 }
-
-
-boolean Lad_mobil(){
-  pressure_reading = analogRead(pressure_pin);
-  Serial.println(pressure_reading);
-  if (pressure_reading > 0) {
-    //Batteriet_kollapser();
-    return true;
-    } else {
-      return false;
-      }
-}
-
  
 
 void Tenn_Lysbulb(){
@@ -233,14 +254,14 @@ void Tenn_Lysbulb(){
 void pulseWhite(uint8_t wait) { // GRBW configuration
   for(int j=0; j<256; j++) { // Ramp up from 0 to 255
     // Fill entire strip with white at gamma-corrected brightness level 'j':
-    slange.fill(slange.Color(0, 0, 0, slange.gamma8(j))); // 100, 100, 100 for mer rolige farger
-    slange.show();
+    slange2.fill(slange2.Color(0, 0, 0, slange2.gamma8(j))); // 100, 100, 100 for mer rolige farger
+    slange2.show();
     delay(wait);
   }
 
   for(int j=255; j>=0; j--) { // Ramp down from 255 to 0
-    slange.fill(slange.Color(0, 0, 0, slange.gamma8(j))); // 0, 100, 100 for lolipop farger
-    slange.show();
+    slange2.fill(slange2.Color(0, 0, 0, slange2.gamma8(j))); // 0, 100, 100 for lolipop farger
+    slange2.show();
     delay(wait);
   }
 }
