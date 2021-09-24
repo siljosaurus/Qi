@@ -48,6 +48,8 @@ void loop(void) {
    if (Lad_mobil()) {
     Serial.println("lader");
     }
+
+   pulseWhite(10);
     
    delay(1000);
   //Solcelle();
@@ -87,7 +89,8 @@ void Batteriet_lades_opp() {
     else {
       Batteri_fullt();
       }
-    delay(2000); // 2 sek for å lade opp
+    delay(4000); // 4 sek for å lade opp
+    // batteriet pulserer litt for å indikere at det lades opp
   }
   
 void Batteriet_lades_ned() {
@@ -97,29 +100,35 @@ void Batteriet_lades_ned() {
     else {
       Batteri_shutdown();
       }
-    delay(1000); // 1 sek for å lade ned
+    delay(2000); // 2 sek for å lade ned
+    // batteriet blir svakere, ser ut som det draines
   }
   
 void Batteriet_kollapser() {
     //skjer kun ved mobillading
     //if (batteri == 0) {kollaps}
     //else {Batteriet_lades_ned();}
+    // delay(1000) 1 sek, halvparten av vanlig shutdown
   }
 
 void Batteri_fullt(){
   // batteri = 9
+  // masse farger og pulserende, maks brightness
   }
   
 void Batteri_halvfullt(){
   // batteri = mellom 4 og 8
+  // litt farger og litt pulserende, halvveis brightness
   }
   
 void Batteri_lavt(){
   // batteri = mellom 3 og 1
+  // rød og blinker, lite brigtness
   }
   
 void Batteri_shutdown(){
   // batteri = 0
+  // ingen lys
   }
 
 void Gi_varme(){
@@ -219,4 +228,27 @@ boolean Lad_mobil(){
 void Tenn_Lysbulb(){
  /* if buttonPressed:
     send strøm */
+}
+
+void pulseWhite(uint8_t wait) { // GRBW configuration
+  for(int j=0; j<256; j++) { // Ramp up from 0 to 255
+    // Fill entire strip with white at gamma-corrected brightness level 'j':
+    slange.fill(slange.Color(0, 0, 0, slange.gamma8(j))); // 100, 100, 100 for mer rolige farger
+    slange.show();
+    delay(wait);
+  }
+
+  for(int j=255; j>=0; j--) { // Ramp down from 255 to 0
+    slange.fill(slange.Color(0, 0, 0, slange.gamma8(j))); // 0, 100, 100 for lolipop farger
+    slange.show();
+    delay(wait);
+  }
+}
+
+void gradientRed(int wait) { // GRB configuration
+    for(int i=0; i<60; i++) { 
+      slange.setPixelColor(i, slange.Color(150, 0, 0));
+      slange.show();   
+      delay(wait);
+    }
 }
