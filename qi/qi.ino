@@ -6,8 +6,8 @@
 
 int batteri = 0; // dette er en skala hvor 0 er shutdown, og 9 er fullt.
 
-int slange_pin = A0;
-int leds_i_slange = 60;
+int slange_pin = 5;
+int leds_i_slange = 59;
 
 int photocellPin = A1;
 int photocellReading;
@@ -15,6 +15,7 @@ int leds_i_solcelleslange = 60;
 int aktive_leds_i_solcelleslange = 0;
 int LEDpin = 11;
 int LEDbrightness;
+
 unsigned long prev = 0;
 
 int pressure_pin = A2;
@@ -28,6 +29,7 @@ int lader = 6;
 
 Adafruit_NeoPixel slange = Adafruit_NeoPixel(leds_i_slange, slange_pin,NEO_GRB + NEO_KHZ800);
 Adafruit_NeoPixel slange2 = Adafruit_NeoPixel(leds_i_slange, slange_pin,NEO_GRBW + NEO_KHZ800);
+
 Adafruit_NeoPixel solcelle_slange = Adafruit_NeoPixel(leds_i_solcelleslange, LEDpin,NEO_GRB + NEO_KHZ800);
 CapacitiveSensor touch = CapacitiveSensor(4,2); // 1M resistor between pins 4 & 2, pin 2 is sensor pin
 
@@ -44,6 +46,7 @@ void setup() {
 
 
 void loop(void) {
+  /*
   if (Registrer_touch()) {
     Gi_varme();
     Serial.println("gir varme");
@@ -59,7 +62,10 @@ void loop(void) {
       stopp_Lading();
       Serial.println("lader ikke");
       }
+      */
 
+  slange.clear();
+  slange2.clear();
    pulseWhite(10);
    gradientRed(10);
     
@@ -254,21 +260,42 @@ void Tenn_Lysbulb(){
 void pulseWhite(uint8_t wait) { // GRBW configuration
   for(int j=0; j<256; j++) { // Ramp up from 0 to 255
     // Fill entire strip with white at gamma-corrected brightness level 'j':
-    slange2.fill(slange2.Color(0, 0, 0, slange2.gamma8(j))); // 100, 100, 100 for mer rolige farger
+    slange2.fill(slange2.Color(255,255, 255, slange2.gamma8(j))); // 100, 100, 100 for mer rolige farger
+    slange2.setBrightness(255);
     slange2.show();
     delay(wait);
   }
 
   for(int j=255; j>=0; j--) { // Ramp down from 255 to 0
-    slange2.fill(slange2.Color(0, 0, 0, slange2.gamma8(j))); // 0, 100, 100 for lolipop farger
+    slange2.fill(slange2.Color(0, 255, 255, slange2.gamma8(j))); // 0, 100, 100 for lolipop farger
+    slange2.setBrightness(255);
     slange2.show();
     delay(wait);
   }
 }
 
 void gradientRed(int wait) { // GRB configuration
+  
     for(int i=0; i<60; i++) { 
-      slange.setPixelColor(i, slange.Color(150, 0, 0));
+      slange.setPixelColor(i, slange.Color(255, 0, 0));
+      slange.setBrightness(255);
+      delay(70);
+      slange.show();   
+      delay(wait);
+    }
+  
+    for(int i=0; i<60; i++) { 
+      slange.setPixelColor(i, slange.Color(0, 255, 0));
+      slange.setBrightness(255);
+      delay(70);
+      slange.show();   
+      delay(wait);
+    }
+  
+    for(int i=0; i<60; i++) { 
+      slange.setPixelColor(i, slange.Color(0, 0, 255));
+      slange.setBrightness(255);
+      delay(70);
       slange.show();   
       delay(wait);
     }
