@@ -6,31 +6,38 @@
 
 int batteri = 0; // dette er en skala hvor 0 er shutdown, og 9 er fullt.
 
-int slange_pin = A0;
-int leds_i_slange = 60;
+// pin 2 og 4 er for touch sensor
+int slange_pin = 5;
+int varmePin = 6;
+// pin 8 og 7 er for touch sensor 2
+int ladeLED = 9;
+int varmePin2 = 10;
+int solcelleLED = 11;
+int lader = 12;
 
-int photocellPin = A1;
-int photocellReading;
+int photocellPin = A0;
+int photocellPin2 = A1;
+int photocellPin3 = A2;
+int pressurePin = A3;
+
+int leds_i_slange = 60;
 int leds_i_solcelleslange = 60;
+
+int photocellReading;
 int aktive_leds_i_solcelleslange = 0;
-int LEDpin = 11;
 int LEDbrightness;
 unsigned long prev = 0;
 
-int pressure_pin = A2;
 int pressure_reading; //variable for storing our reading
 
-int varmePin = 10;
 unsigned long varmeTid = 200; // lavere verdi blir til varmere peltier
 int sensitivity = 200;
 
-int lader = 6;
-
 Adafruit_NeoPixel slange = Adafruit_NeoPixel(leds_i_slange, slange_pin,NEO_GRB + NEO_KHZ800);
 Adafruit_NeoPixel slange2 = Adafruit_NeoPixel(leds_i_slange, slange_pin,NEO_GRBW + NEO_KHZ800);
-Adafruit_NeoPixel solcelle_slange = Adafruit_NeoPixel(leds_i_solcelleslange, LEDpin,NEO_GRB + NEO_KHZ800);
+Adafruit_NeoPixel solcelle_slange = Adafruit_NeoPixel(leds_i_solcelleslange, solcelleLED,NEO_GRB + NEO_KHZ800);
 CapacitiveSensor touch = CapacitiveSensor(4,2); // 1M resistor between pins 4 & 2, pin 2 is sensor pin
-
+CapacitiveSensor touch2 = CapacitiveSensor(8,7); // 1M resistor between pins 8 & 7, pin 7 is sensor pin
 
 void setup() {
   Serial.begin(9600);
@@ -62,6 +69,9 @@ void loop(void) {
 
    pulseWhite(10);
    gradientRed(10);
+   lad();
+   delay(5000);
+   stopp_Lading();
     
    delay(1000);
   //Solcelle();
@@ -118,9 +128,13 @@ void Batteriet_lades_ned() {
   
 void Batteriet_kollapser() {
     //skjer kun ved mobillading
-    //if (batteri == 0) {kollaps}
-    //else {Batteriet_lades_ned();}
-    // delay(1000) 1 sek, halvparten av vanlig shutdown
+    if (batteri == 0) { //kollaps 
+      batteri -= 1;
+      }
+      else {
+        Batteri_shutdown();
+        }
+     delay(1000); //1 sek, halvparten av vanlig shutdown
   }
 
 void Batteri_fullt(){
@@ -135,12 +149,15 @@ void Batteri_halvfullt(){
   
 void Batteri_lavt(){
   // batteri = mellom 3 og 1
-  // rød og blinker, lite brigtness
+  // rød og blinker, lite brightness
   }
   
 void Batteri_shutdown(){
   // batteri = 0
-  // ingen lys
+  for(int i=0; i<leds_i_slange; i++) { 
+    slange.setPixelColor(i, slange.Color(0, 0, 0));
+    slange.show();   
+    }
   }
 
 boolean Registrer_touch(){
@@ -174,7 +191,7 @@ void Stopp_varme() {
 
 
 boolean Registrer_mobil(){
-  pressure_reading = analogRead(pressure_pin);
+  pressure_reading = analogRead(pressurePin);
   Serial.println(pressure_reading);
   
   if (pressure_reading > 0) {
@@ -267,7 +284,7 @@ void pulseWhite(uint8_t wait) { // GRBW configuration
 }
 
 void gradientRed(int wait) { // GRB configuration
-    for(int i=0; i<60; i++) { 
+    for(int i=0; i<leds_i_slange; i++) { 
       slange.setPixelColor(i, slange.Color(150, 0, 0));
       slange.show();   
       delay(wait);
