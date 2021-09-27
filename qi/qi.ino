@@ -6,44 +6,55 @@
 
 int batteri = 0; // dette er en skala hvor 0 er shutdown, og 9 er fullt.
 
+// pin 2 og 4 er for touch sensor
 int slange_pin = 5;
-int leds_i_slange = 59;
+int varmePin = 6;
+// pin 8 og 7 er for touch sensor 2
+int ladeLED = 9;
+int varmePin2 = 10;
+int solcelleLED = 11;
+int lader = 12;
 
-int photocellPin = A1;
-int photocellReading;
+int photocellPin = A0;
+int photocellPin2 = A1;
+int photocellPin3 = A2;
+int pressurePin = A3;
+
+int leds_i_slange = 60;
 int leds_i_solcelleslange = 60;
+
+int photocellReading;
 int aktive_leds_i_solcelleslange = 0;
-int LEDpin = 11;
 int LEDbrightness;
 
 unsigned long prev = 0;
 
-int pressure_pin = A2;
 int pressure_reading; //variable for storing our reading
 
-int varmePin = 10;
 unsigned long varmeTid = 200; // lavere verdi blir til varmere peltier
 int sensitivity = 200;
 
-int lader = 6;
 
-Adafruit_NeoPixel slange = Adafruit_NeoPixel(leds_i_slange, slange_pin,NEO_GRB + NEO_KHZ800);// ensfargete
-Adafruit_NeoPixel slange2 = Adafruit_NeoPixel(leds_i_slange, slange_pin,NEO_GRBW + NEO_KHZ800); // regnbueting
-
-Adafruit_NeoPixel solcelle_slange = Adafruit_NeoPixel(leds_i_solcelleslange, LEDpin,NEO_GRB + NEO_KHZ800);
+Adafruit_NeoPixel slange = Adafruit_NeoPixel(leds_i_slange, slange_pin,NEO_GRB + NEO_KHZ800);
+Adafruit_NeoPixel slange2 = Adafruit_NeoPixel(leds_i_slange, slange_pin,NEO_GRBW + NEO_KHZ800);
+Adafruit_NeoPixel solcelle_slange = Adafruit_NeoPixel(leds_i_solcelleslange, solcelleLED,NEO_GRB + NEO_KHZ800);
 CapacitiveSensor touch = CapacitiveSensor(4,2); // 1M resistor between pins 4 & 2, pin 2 is sensor pin
-
+CapacitiveSensor touch2 = CapacitiveSensor(8,7); // 1M resistor between pins 8 & 7, pin 7 is sensor pin
 
 void setup() {
   slange.clear();
   slange2.clear();
+  solcelle_slange.clear();
+  
   Serial.begin(9600);
+  
   slange.begin();
   slange2.begin();
   solcelle_slange.begin();
-  //touch.set_CS_AutocaL_Millis(0xFFFFFFFF);
-  //pinMode(varmePin, OUTPUT);
-  //pinMode(lader, OUTPUT);
+  
+  touch.set_CS_AutocaL_Millis(0xFFFFFFFF);
+  pinMode(varmePin, OUTPUT);
+  pinMode(lader, OUTPUT);
 }
 
 
@@ -56,7 +67,7 @@ void loop(void) {
       Stopp_varme();
       Serial.println("stopper varme");
       }
-   
+
    if (Registrer_mobil()) {
     lad();
     Serial.println("lader");
@@ -65,44 +76,47 @@ void loop(void) {
       Serial.println("lader ikke");
       }
       */
-
-    /*
-    solcelle_slange.clear();
-    Solcelle();
-    solcelle_slange.clear();
-    */
-
     
-  slange2.clear();
-  slange.clear();
+   slange2.clear();
+   slange.clear();
 
-  // lade ned
-  Ladeeffekt(238,130,238, 50); // The first 3 parametres roughly defines the color, the last parameter indicates delay in the loop.
+   // lade ned
+   Ladeeffekt(238,130,238, 50); // The first 3 parametres roughly defines the color, the last parameter indicates delay in the loop.
   
-  slange.clear();
-  slange2.clear();
+   slange.clear();
+   slange2.clear();
 
-  // lade opp
-  theaterChase(238,130,238,150);
+   // lade opp
+   theaterChase(238,130,238,150);
 
-  slange.clear();
-  slange2.clear();
+   slange.clear();
+   slange2.clear();
 
-  // fylles opp 
-  meteorRain(0xff,0xff,0xff,10, 64, true, 50);
+   // fylles opp 
+   meteorRain(0xff,0xff,0xff,10, 64, true, 50);
   
-  slange.clear();
-  slange2.clear();
+   slange.clear();
+   slange2.clear();
 
-  // kollaps kanskje?
-  Strobe(0xff, 0x77, 0x00, 10, 100, 1000);
+   // kollaps kanskje?
+   Strobe(0xff, 0x77, 0x00, 10, 100, 1000);
   
-  slange.clear();
-  slange2.clear();
+   slange.clear();
+   slange2.clear();
+
+   pulseWhite(10);
+   gradientRed(10);
+   
+   lad();
+   
+   delay(5000);
+   stopp_Lading();
+
+   delay(1000);
+  // Solcelle();
+  // Styr_batteriet();
+
 }
-
-
-
 
 
 void Styr_batteriet(){}
@@ -118,7 +132,7 @@ void Batteriet_lades_opp() {
     delay(4000); // 4 sek for å lade opp
     // batteriet pulserer litt for å indikere at det lades opp
   }
-  
+
 void Batteriet_lades_ned() {
   if (batteri > 0) {
     batteri -= 1;
@@ -129,38 +143,45 @@ void Batteriet_lades_ned() {
     delay(2000); // 2 sek for å lade ned
     // batteriet blir svakere, ser ut som det draines
   }
-  
+
 void Batteriet_kollapser() {
     //skjer kun ved mobillading
-    //if (batteri == 0) {kollaps}
-    //else {Batteriet_lades_ned();}
-    // delay(1000) 1 sek, halvparten av vanlig shutdown
+    if (batteri == 0) { //kollaps
+      batteri -= 1;
+      }
+      else {
+        Batteri_shutdown();
+        }
+     delay(1000); //1 sek, halvparten av vanlig shutdown
   }
 
 void Batteri_fullt(){
   // batteri = 9
   // masse farger og pulserende, maks brightness
   }
-  
+
 void Batteri_halvfullt(){
   // batteri = mellom 4 og 8
   // litt farger og litt pulserende, halvveis brightness
   }
-  
+
 void Batteri_lavt(){
   // batteri = mellom 3 og 1
-  // rød og blinker, lite brigtness
+  // rød og blinker, lite brightness
   }
-  
+
 void Batteri_shutdown(){
   // batteri = 0
-  // ingen lys
+  for(int i=0; i<leds_i_slange; i++) {
+    slange.setPixelColor(i, slange.Color(0, 0, 0));
+    slange.show();
+    }
   }
 
 boolean Registrer_touch(){
   long total = touch.capacitiveSensor(30);
   Serial.println(total);
-  
+
   if (total > sensitivity) {
     return true;
     } else {
@@ -175,7 +196,7 @@ void Gi_varme(){
     } else {
       digitalWrite(varmePin, LOW);
       }
-  
+
   //funksjon for å gi varme ved registrering, hvordan peltier skal oppføre seg ved interaksjon
   //< 5 sek: level 1 (kaldest, romtemp)
   //< 10 && > 5 sek: level 2 (litt varmt)
@@ -188,9 +209,9 @@ void Stopp_varme() {
 
 
 boolean Registrer_mobil(){
-  pressure_reading = analogRead(pressure_pin);
+  pressure_reading = analogRead(pressurePin);
   Serial.println(pressure_reading);
-  
+
   if (pressure_reading > 0) {
     //Batteriet_kollapser();
     return true;
@@ -208,19 +229,19 @@ void stopp_Lading() {
   digitalWrite(lader, LOW);
 }
 
- 
+
 void Solcelle(){
   int photocellReading = analogRead(photocellPin);
   Serial.print("Analog reading = ");
   Serial.println(photocellReading);
 
-  
   //photocellReading = 1023 - photocellReading;
-  //for (int i= 0; i<leds_i_slange; i++) {
-     //solcelle_slange.setPixelColor(i, 0, 0, 255);
+
+ // for (int i= 0; i<leds_i_slange; i++) {
+    // solcelle_slange.setPixelColor(i, 0, 0, 255);
     //solcelle_slange.show();}
-    
-  LEDbrightness = map(photocellReading, 0, 210, 0, 255);
+
+  //LEDbrightness = map(photocellReading, 0, 210, 0, 255);
   //Serial.println(LEDbrightness);
   
     int num_leds_to_show = map(photocellReading, 60, 700, 0, leds_i_solcelleslange);
@@ -231,7 +252,7 @@ void Solcelle(){
     if (diff > 1) {
       unsigned long now = millis();
       if (now - prev > 100) { //har det gått mer enn et sekund siden forrige økning?:
-         diff = 1; // 
+         diff = 1; //
          prev = now;
         } else {
           diff = 0;
@@ -240,7 +261,7 @@ void Solcelle(){
 
     num_leds_to_show = aktive_leds_i_solcelleslange + diff;
     aktive_leds_i_solcelleslange = num_leds_to_show;
-    
+
     if(num_leds_to_show > 40){
       // batteri_ladesoppeller ned
     }
@@ -252,10 +273,10 @@ void Solcelle(){
        else{
           solcelle_slange.setPixelColor(i, solcelle_slange.Color(0, 0, 0));
         }
-     solcelle_slange.show();
   }
+     solcelle_slange.show();
 }
- 
+
 
 void Tenn_Lysbulb(){
  /* if buttonPressed:
@@ -273,6 +294,7 @@ void pulseWhite(uint8_t wait) { // GRBW configuration
 
   for(int j=255; j>=0; j--) { // Ramp down from 255 to 0
     slange2.fill(slange2.Color(0, 255, 255, slange2.gamma8(j))); // 0, 100, 100 for lolipop farger
+    slange2.setBrightness(255);
     slange2.show();
     delay(wait);
   }
@@ -283,10 +305,9 @@ void gradientRed(int wait) { // GRB configuration
     for(int i=0; i<60; i++) { 
       slange.setPixelColor(i, slange.Color(0, 255, 0));
       delay(70);
-      slange.show();   
+      slange.show();
       delay(wait);
     }
- 
 }
 
 void Strobe(byte red, byte green, byte blue, int StrobeCount, int FlashDelay, int EndPause){
@@ -370,8 +391,7 @@ void theaterChase(byte red, byte green, byte blue, int SpeedDelay) {
  void Ladeeffekt(byte red, byte green, byte blue, int WaveDelay) {
   int Position=0;
  
-  for(int j=0; j<60*2; j++)
-  {
+  for(int j=0; j<60*2; j++) {
       Position++; // = 0; //Position + Rate;
       for(int i=0; i<60; i++) {
         // sine wave, 3 offset waves make a rainbow!
