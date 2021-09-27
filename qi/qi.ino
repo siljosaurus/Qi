@@ -30,6 +30,7 @@ int LEDbrightness;
 unsigned long prev = 0;
 
 int pressure_reading; //variable for storing our reading
+int pressure = 7; //verdi for press
 
 unsigned long varmeTid = 200; // lavere verdi blir til varmere peltier
 int sensitivity = 200;
@@ -60,7 +61,7 @@ void loop(void) {
       Stopp_varme();
       Serial.println("stopper varme");
       }
-
+*/
    if (Registrer_mobil()) {
     lad();
     Serial.println("lader");
@@ -68,8 +69,8 @@ void loop(void) {
       stopp_Lading();
       Serial.println("lader ikke");
       }
-      */
-
+      
+/*
   slange.clear();
   slange2.clear();
    pulseWhite(10);
@@ -77,7 +78,7 @@ void loop(void) {
    lad();
    delay(5000);
    stopp_Lading();
-
+*/
    delay(1000);
   //Solcelle();
   // Styr_batteriet();
@@ -134,10 +135,9 @@ void Batteriet_lades_ned() {
 void Batteriet_kollapser() {
     //skjer kun ved mobillading
     if (batteri == 0) { //kollaps
-      batteri -= 1;
       }
       else {
-        Batteri_shutdown();
+        batteri -= 1;
         }
      delay(1000); //1 sek, halvparten av vanlig shutdown
   }
@@ -199,7 +199,7 @@ boolean Registrer_mobil(){
   pressure_reading = analogRead(pressurePin);
   Serial.println(pressure_reading);
 
-  if (pressure_reading > 0) {
+  if (pressure_reading > pressure) {
     //Batteriet_kollapser();
     return true;
     } else {
