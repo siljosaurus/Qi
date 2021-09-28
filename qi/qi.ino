@@ -30,36 +30,42 @@ int LEDbrightness;
 unsigned long prev = 0;
 
 int pressure_reading; //variable for storing our reading
-int pressure = 7; //verdi for press
+int pressure = 65; //verdi for press
 
 unsigned long varmeTid = 200; // lavere verdi blir til varmere peltier
 int sensitivity = 200;
 
 
-Adafruit_NeoPixel slange = Adafruit_NeoPixel(leds_i_slange, slange_pin,NEO_GRB + NEO_KHZ800);
-Adafruit_NeoPixel slange2 = Adafruit_NeoPixel(leds_i_slange, slange_pin,NEO_GRBW + NEO_KHZ800);
+Adafruit_NeoPixel batteri_slange = Adafruit_NeoPixel(leds_i_slange, slange_pin,NEO_GRB + NEO_KHZ800);
+Adafruit_NeoPixel batteri_regnbue_slange = Adafruit_NeoPixel(leds_i_slange, slange_pin,NEO_GRBW + NEO_KHZ800);
 Adafruit_NeoPixel solcelle_slange = Adafruit_NeoPixel(leds_i_solcelleslange, solcelleLED,NEO_GRB + NEO_KHZ800);
+Adafruit_NeoPixel lade_slange = Adafruit_NeoPixel(leds_i_slange, ladeLED,NEO_GRB + NEO_KHZ800);
 CapacitiveSensor touch = CapacitiveSensor(4,2); // 1M resistor between pins 4 & 2, pin 2 is sensor pin
 CapacitiveSensor touch2 = CapacitiveSensor(8,7); // 1M resistor between pins 8 & 7, pin 7 is sensor pin
 
 void setup() {
-  slange.clear();
-  slange2.clear();
-  solcelle_slange.clear();
-  
   Serial.begin(9600);
   
-  slange.begin();
-  slange2.begin();
+  batteri_slange.clear();
+  batteri_regnbue_slange.clear();
+  solcelle_slange.clear();
+  lade_slange.clear();
+  
+  batteri_slange.begin();
+  batteri_regnbue_slange.begin();
   solcelle_slange.begin();
+  lade_slange.begin();
   
   touch.set_CS_AutocaL_Millis(0xFFFFFFFF);
+  touch2.set_CS_AutocaL_Millis(0xFFFFFFFF);
   pinMode(varmePin, OUTPUT);
+  pinMode(varmePin2, OUTPUT);
   pinMode(lader, OUTPUT);
 }
 
 
 void loop(void) {
+  
   /*
   if (Registrer_touch()) {
     Gi_varme();
@@ -68,14 +74,14 @@ void loop(void) {
       Stopp_varme();
       Serial.println("stopper varme");
       }
-*/
+
    if (Registrer_mobil()) {
     lad();
     Serial.println("lader");
     } else {
       stopp_Lading();
       Serial.println("lader ikke");
-      }
+      } 
 
       
 /*
@@ -175,8 +181,8 @@ void Batteri_lavt(){
 void Batteri_shutdown(){
   // batteri = 0
   for(int i=0; i<leds_i_slange; i++) {
-    slange.setPixelColor(i, slange.Color(0, 0, 0));
-    slange.show();
+    batteri_slange.setPixelColor(i, batteri_slange.Color(0, 0, 0));
+    batteri_slange.show();
     }
   }
 
@@ -191,12 +197,12 @@ boolean Registrer_touch(){
       }
 }
 
-void Gi_varme(){
+void Gi_varme(int pin){
   //Batteriet_lades_opp();
   if (millis() % 2000 > varmeTid) {
-    digitalWrite(varmePin, HIGH);
+    digitalWrite(pin, HIGH);
     } else {
-      digitalWrite(varmePin, LOW);
+      digitalWrite(pin, LOW);
       }
 
   //funksjon for å gi varme ved registrering, hvordan peltier skal oppføre seg ved interaksjon
@@ -205,8 +211,8 @@ void Gi_varme(){
   //< 15 && > 10 sek: level 3 (varmest)
 }
 
-void Stopp_varme() {
-  digitalWrite(varmePin, LOW);
+void Stopp_varme(int pin) {
+  digitalWrite(pin, LOW);
 }
 
 
@@ -232,8 +238,8 @@ void stopp_Lading() {
 }
 
 
-void Solcelle(){
-  int photocellReading = analogRead(photocellPin);
+void Solcelle(int pin){
+  int photocellReading = analogRead(pin);
   Serial.print("Analog reading = ");
   Serial.println(photocellReading);
 
@@ -288,16 +294,16 @@ void Tenn_Lysbulb(){
 void pulseWhite(uint8_t wait) { // GRBW configuration
   for(int j=0; j<256; j++) { // Ramp up from 0 to 255
     // Fill entire strip with white at gamma-corrected brightness level 'j':
-    slange2.fill(slange2.Color(255,255, 255, slange2.gamma8(j))); // 100, 100, 100 for mer rolige farger
-    slange2.setBrightness(255);
-    slange2.show();
+    batteri_regnbue_slange.fill(batteri_regnbue_slange.Color(255,255, 255, batteri_regnbue_slange.gamma8(j))); // 100, 100, 100 for mer rolige farger
+    batteri_regnbue_slange.setBrightness(255);
+    batteri_regnbue_slange.show();
     delay(wait);
   }
 
   for(int j=255; j>=0; j--) { // Ramp down from 255 to 0
-    slange2.fill(slange2.Color(0, 255, 255, slange2.gamma8(j))); // 0, 100, 100 for lolipop farger
-    slange2.setBrightness(255);
-    slange2.show();
+    batteri_regnbue_slange.fill(batteri_regnbue_slange.Color(0, 255, 255, batteri_regnbue_slange.gamma8(j))); // 0, 100, 100 for lolipop farger
+    batteri_regnbue_slange.setBrightness(255);
+    batteri_regnbue_slange.show();
     delay(wait);
   }
 }
@@ -305,20 +311,20 @@ void pulseWhite(uint8_t wait) { // GRBW configuration
 void gradientRed(int wait) { // GRB configuration
   
     for(int i=0; i<60; i++) { 
-      slange.setPixelColor(i, slange.Color(0, 255, 0));
+      batteri_slange.setPixelColor(i, batteri_regnbue_slange.Color(0, 255, 0));
       delay(70);
-      slange.show();
+      batteri_slange.show();
       delay(wait);
     }
 }
 
 void Strobe(byte red, byte green, byte blue, int StrobeCount, int FlashDelay, int EndPause){
   for(int j = 0; j < StrobeCount; j++) {
-    slange2.fill(slange2.Color(255, 255, 255, slange2.gamma8(j)));
-    slange2.show();
+    batteri_regnbue_slange.fill(batteri_regnbue_slange.Color(255, 255, 255, batteri_regnbue_slange.gamma8(j)));
+    batteri_regnbue_slange.show();
     delay(FlashDelay);
-    slange2.fill(slange2.Color(0, 0, 0, slange2.gamma8(j)));
-    slange2.show();
+    batteri_regnbue_slange.fill(batteri_regnbue_slange.Color(0, 0, 0, batteri_regnbue_slange.gamma8(j)));
+    batteri_regnbue_slange.show();
     delay(FlashDelay);
   }
  
@@ -340,11 +346,11 @@ void meteorRain(byte red, byte green, byte blue, byte meteorSize, byte meteorTra
     // draw meteor
     for(int j = 0; j < meteorSize; j++) {
       if( ( i-j <NUM_LEDS) && (i-j>=0) ) {
-        slange.setPixelColor(i-j, red, green, blue);
+        batteri_slange.setPixelColor(i-j, red, green, blue);
       }
     }
    
-    slange.show();
+    batteri_slange.show();
     delay(SpeedDelay);
   }
 }
@@ -356,7 +362,7 @@ void fadeToBlack(int ledNo, byte fadeValue) {
     uint8_t r, g, b;
     int value;
    
-    oldColor = slange.getPixelColor(ledNo);
+    oldColor = batteri_slange.getPixelColor(ledNo);
     r = (oldColor & 0x00ff0000UL) >> 16;
     g = (oldColor & 0x0000ff00UL) >> 8;
     b = (oldColor & 0x000000ffUL);
@@ -365,7 +371,7 @@ void fadeToBlack(int ledNo, byte fadeValue) {
     g=(g<=10)? 0 : (int) g-(g*fadeValue/256);
     b=(b<=10)? 0 : (int) b-(b*fadeValue/256);
    
-    slange.setPixelColor(ledNo, r,g,b);
+    batteri_slange.setPixelColor(ledNo, r,g,b);
  #endif
  #ifndef ADAFRUIT_NEOPIXEL_H
    // FastLED
@@ -377,13 +383,13 @@ void theaterChase(byte red, byte green, byte blue, int SpeedDelay) {
   for (int j=0; j<10; j++) {  //do 10 cycles of chasing
     for (int q=0; q < 3; q++) {
       for (int i=0; i < 60; i=i+3) {
-        slange.setPixelColor(i+q, red, green, blue); //turn every third pixel on
+        batteri_slange.setPixelColor(i+q, red, green, blue); //turn every third pixel on
       }
-      slange.show();
+      batteri_slange.show();
       delay(SpeedDelay);
      
       for (int i=0; i < 60; i=i+3) {
-        slange.setPixelColor(i+q, 0,0,0); //turn every third pixel off
+        batteri_slange.setPixelColor(i+q, 0,0,0); //turn every third pixel off
       }
     }
   }
@@ -400,12 +406,12 @@ void theaterChase(byte red, byte green, byte blue, int SpeedDelay) {
         //float level = sin(i+Position) * 127 + 128;
         //setPixel(i,level,0,0);
         //float level = sin(i+Position) * 127 + 128;
-        slange.setPixelColor(i,((sin(i+Position) * 127 + 128)/255)*red,
+        batteri_slange.setPixelColor(i,((sin(i+Position) * 127 + 128)/255)*red,
                    ((sin(i+Position) * 127 + 128)/255)*green,
                    ((sin(i+Position) * 127 + 128)/255)*blue);
       }
-      slange.setBrightness(255);
-      slange.show();
+      batteri_slange.setBrightness(255);
+      batteri_slange.show();
       delay(WaveDelay);
   }
 }
