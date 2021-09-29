@@ -109,8 +109,8 @@ void loop(void) {
 void Styr_batteriet() {
       Batteri_fullt(); // grønn
       Batteri_halvfullt(); // blå
-      Batteri_lavt(); // 
-      Batteri_shutdown();
+      Batteri_lavt(); // rød
+      Batteri_shutdown(); // strobe
   }
 
 
