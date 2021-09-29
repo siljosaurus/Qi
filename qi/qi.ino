@@ -4,14 +4,15 @@
 
 #include <CapacitiveSensor.h>
 
-int batteri = 0; // dette er en skala hvor 0 er shutdown, og 9 er fullt.
+int batteri = 5; // dette er en skala hvor 0 er shutdown, og 9 er fullt.
 
 // pin 2 og 4 er for touch sensor
 int slange_pin = 5;
-int varmePin = 6;
+int peltier_kald = 10;
+int peltier_varm = 6;
+
 // pin 8 og 7 er for touch sensor 2
 int ladeLED = 9;
-int varmePin2 = 10;
 int solcelleLED = 11;
 int lader = 12;
 
@@ -43,6 +44,8 @@ Adafruit_NeoPixel lade_slange = Adafruit_NeoPixel(leds_i_slange, ladeLED,NEO_GRB
 CapacitiveSensor touch = CapacitiveSensor(4,2); // 1M resistor between pins 4 & 2, pin 2 is sensor pin
 CapacitiveSensor touch2 = CapacitiveSensor(8,7); // 1M resistor between pins 8 & 7, pin 7 is sensor pin
 
+// TODO: hva slags Type er CapacitiveSensor??? 
+
 void setup() {
   Serial.begin(9600);
   
@@ -58,23 +61,37 @@ void setup() {
   
   touch.set_CS_AutocaL_Millis(0xFFFFFFFF);
   touch2.set_CS_AutocaL_Millis(0xFFFFFFFF);
-  pinMode(varmePin, OUTPUT);
-  pinMode(varmePin2, OUTPUT);
+  pinMode(peltier_kald, OUTPUT);
+  pinMode(peltier_kald, OUTPUT);
   pinMode(lader, OUTPUT);
+
+  gradientGreen(10);
 }
 
 
 void loop(void) {
-  
-  /*
+  Styr_batteriet();
+   
+  // Kjenn_kulde(peltier_kald);
+  // Kjenn_varme(peltier_varm);
+
+ 
+ 
+ /*
+  Solcelle(photocellPin);
+  Solcelle(photocellPin2);
+  Solcelle(photocellPin3);
+
   if (Registrer_touch()) {
-    Gi_varme();
+    Gi_varme(peltier_kald);
     Serial.println("gir varme");
     } else {
-      Stopp_varme();
+      Stopp_varme(peltier_kald);
       Serial.println("stopper varme");
       }
 
+    */
+     
    if (Registrer_mobil()) {
     lad();
     Serial.println("lader");
@@ -82,56 +99,34 @@ void loop(void) {
       stopp_Lading();
       Serial.println("lader ikke");
       } 
-
       
-/*
-  slange.clear();
-  slange2.clear();
-/*
+     
 
-   // lade ned
-   Ladeeffekt(238,130,238, 50); // The first 3 parametres roughly defines the color, the last parameter indicates delay in the loop.
-  
-   slange.clear();
-   slange2.clear();
-
-   // lade opp
-   theaterChase(238,130,238,150);
-
-   slange.clear();
-   slange2.clear();
-
-   // fylles opp 
-   meteorRain(0xff,0xff,0xff,10, 64, true, 50);
-  
-   slange.clear();
-   slange2.clear();
-
-   // kollaps kanskje?
-   Strobe(0xff, 0x77, 0x00, 10, 100, 1000);
-  
-   slange.clear();
-   slange2.clear();
-
-   pulseWhite(10);
-   gradientRed(10);
-   
-   lad();
-   
-   delay(5000);
-   stopp_Lading();
-*/
    delay(1000);
-  // Solcelle();
-  // Styr_batteriet();
 
 }
 
-
-void Styr_batteriet(){}
+void Styr_batteriet() {
+      Batteri_fullt(); // grønn
+      Batteri_halvfullt(); // blå
+      Batteri_lavt(); // 
+      Batteri_shutdown();
+  }
 
 
 void Batteriet_lades_opp() {
+  batteri_slange.clear();
+  batteri_regnbue_slange.clear();
+
+  // fylles opp 
+   meteorRain(0xff,0xff,0xff,10, 64, true, 50);
+
+  batteri_slange.clear();
+  batteri_regnbue_slange.clear();
+   
+  // lade opp
+  // theaterChase(238,130,238,150);
+   
   if (batteri < 9) {
     batteri += 1;
     }
@@ -143,6 +138,12 @@ void Batteriet_lades_opp() {
   }
 
 void Batteriet_lades_ned() {
+   batteri_slange.clear();
+   batteri_regnbue_slange.clear();
+ 
+   // lade ned
+   Ladeeffekt(238,130,238, 50); // The first 3 parametres roughly defines the color, the last parameter indicates delay in the loop.
+  
   if (batteri > 0) {
     batteri -= 1;
     }
@@ -154,32 +155,75 @@ void Batteriet_lades_ned() {
   }
 
 void Batteriet_kollapser() {
+  
+   batteri_slange.clear();
+   batteri_regnbue_slange.clear();
+
+   // kollaps 
+   
     //skjer kun ved mobillading
     if (batteri == 0) { //kollaps
+         Strobe(0xff, 0x77, 0x00, 10, 100, 1000);
+
       }
       else {
         batteri -= 1;
         }
-     delay(1000); //1 sek, halvparten av vanlig shutdown
+     delay(8000); // 10 sek, halvparten av vanlig shutdown
   }
 
 void Batteri_fullt(){
+
+  if (batteri == 9) {
+      batteri_slange.clear();
+      batteri_regnbue_slange.clear();
+      gradientGreen(10);
+    }
+    
   // batteri = 9
   // masse farger og pulserende, maks brightness
   }
 
 void Batteri_halvfullt(){
+
+  if (batteri > 4 and batteri < 8) {
+     batteri_slange.clear();
+     batteri_regnbue_slange.clear();
+     gradientBlue(10);
+    }
+  
+  
   // batteri = mellom 4 og 8
   // litt farger og litt pulserende, halvveis brightness
+   
   }
 
 void Batteri_lavt(){
+  
+  if (batteri < 3 and batteri > 1) { 
+    
+    batteri_slange.clear();
+    batteri_regnbue_slange.clear();
+    
+    gradientRed(10);
+      }
+   
+      else {
+        batteri -= 1;
+        }  
+  
+ 
   // batteri = mellom 3 og 1
   // rød og blinker, lite brightness
+
   }
 
 void Batteri_shutdown(){
   // batteri = 0
+
+  batteri_slange.clear();
+  batteri_regnbue_slange.clear();
+  
   for(int i=0; i<leds_i_slange; i++) {
     batteri_slange.setPixelColor(i, batteri_slange.Color(0, 0, 0));
     batteri_slange.show();
@@ -187,7 +231,7 @@ void Batteri_shutdown(){
   }
 
 boolean Registrer_touch(){
-  long total = touch.capacitiveSensor(30);
+  long total = touch2.capacitiveSensor(30);
   Serial.println(total);
 
   if (total > sensitivity) {
@@ -197,18 +241,28 @@ boolean Registrer_touch(){
       }
 }
 
-void Gi_varme(int pin){
-  //Batteriet_lades_opp();
+
+void Kjenn_varme(int pin){
+  Batteriet_lades_ned();
+
+   // varmeTid parameteret kan justeres. Lavere verdi gir et varmere peltier.
   if (millis() % 2000 > varmeTid) {
     digitalWrite(pin, HIGH);
     } else {
       digitalWrite(pin, LOW);
       }
+}
 
-  //funksjon for å gi varme ved registrering, hvordan peltier skal oppføre seg ved interaksjon
-  //< 5 sek: level 1 (kaldest, romtemp)
-  //< 10 && > 5 sek: level 2 (litt varmt)
-  //< 15 && > 10 sek: level 3 (varmest)
+
+void Kjenn_kulde(int pin) {
+  Batteriet_lades_opp();
+  
+  // varmeTid parameteret kan justeres. Lavere verdi gir et varmere peltier.
+  if (millis() % 2000 > varmeTid) {
+    digitalWrite(pin, HIGH);
+    } else {
+      digitalWrite(pin, LOW);
+      }
 }
 
 void Stopp_varme(int pin) {
@@ -229,7 +283,10 @@ boolean Registrer_mobil(){
 }
 
 void lad() {
+  // koble inn ledlyslenke, og telle ned til kollaps
+  
   digitalWrite(lader, HIGH);
+  Batteriet_kollapser();
 }
 
 
@@ -240,7 +297,8 @@ void stopp_Lading() {
 
 void Solcelle(int pin){
   int photocellReading = analogRead(pin);
-  Serial.print("Analog reading = ");
+  Serial.print(pin);
+  Serial.print("  Analog reading = ");
   Serial.println(photocellReading);
 
   //photocellReading = 1023 - photocellReading;
@@ -271,7 +329,8 @@ void Solcelle(int pin){
     aktive_leds_i_solcelleslange = num_leds_to_show;
 
     if(num_leds_to_show > 40){
-      // batteri_ladesoppeller ned
+      
+      Batteriet_lades_opp();
     }
 
     for (int i=0; i < leds_i_solcelleslange; i++){
@@ -286,12 +345,8 @@ void Solcelle(int pin){
 }
 
 
-void Tenn_Lysbulb(){
- /* if buttonPressed:
-    send strøm */
-}
-
 void pulseWhite(uint8_t wait) { // GRBW configuration
+  /*
   for(int j=0; j<256; j++) { // Ramp up from 0 to 255
     // Fill entire strip with white at gamma-corrected brightness level 'j':
     batteri_regnbue_slange.fill(batteri_regnbue_slange.Color(255,255, 255, batteri_regnbue_slange.gamma8(j))); // 100, 100, 100 for mer rolige farger
@@ -299,6 +354,7 @@ void pulseWhite(uint8_t wait) { // GRBW configuration
     batteri_regnbue_slange.show();
     delay(wait);
   }
+  */
 
   for(int j=255; j>=0; j--) { // Ramp down from 255 to 0
     batteri_regnbue_slange.fill(batteri_regnbue_slange.Color(0, 255, 255, batteri_regnbue_slange.gamma8(j))); // 0, 100, 100 for lolipop farger
@@ -309,9 +365,26 @@ void pulseWhite(uint8_t wait) { // GRBW configuration
 }
 
 void gradientRed(int wait) { // GRB configuration
-  
+    for(int i=0; i<60; i++) { 
+      batteri_slange.setPixelColor(i, batteri_regnbue_slange.Color(255, 0, 0));
+      delay(70);
+      batteri_slange.show();
+      delay(wait);
+    }
+}
+
+void gradientGreen(int wait) { // GRB configuration
     for(int i=0; i<60; i++) { 
       batteri_slange.setPixelColor(i, batteri_regnbue_slange.Color(0, 255, 0));
+      delay(70);
+      batteri_slange.show();
+      delay(wait);
+    }
+}
+
+void gradientBlue(int wait) { // GRB configuration
+    for(int i=0; i<60; i++) { 
+      batteri_slange.setPixelColor(i, batteri_regnbue_slange.Color(0, 0, 255));
       delay(70);
       batteri_slange.show();
       delay(wait);
