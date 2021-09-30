@@ -64,8 +64,10 @@ void setup() {
   pinMode(peltier_kald, OUTPUT);
   pinMode(peltier_kald, OUTPUT);
   pinMode(lader, OUTPUT);
+  
+  gradientYellow(10);
 
-  gradientGreen(10);
+  
 }
 
 
@@ -74,8 +76,6 @@ void loop(void) {
    
   // Kjenn_kulde(peltier_kald);
   // Kjenn_varme(peltier_varm);
-
- 
  
  /*
   Solcelle(photocellPin);
@@ -99,14 +99,12 @@ void loop(void) {
       stopp_Lading();
       Serial.println("lader ikke");
       } 
-      
      
-
-   delay(1000);
-
+   delay(500);
 }
 
 void Styr_batteriet() {
+  
       Batteri_fullt(); // grønn
       Batteri_halvfullt(); // blå
       Batteri_lavt(); // rød
@@ -201,11 +199,10 @@ void Batteri_halvfullt(){
 void Batteri_lavt(){
   
   if (batteri < 3 and batteri > 1) { 
-    
     batteri_slange.clear();
     batteri_regnbue_slange.clear();
-    
     gradientRed(10);
+    
       }
    
       else {
@@ -385,6 +382,16 @@ void gradientGreen(int wait) { // GRB configuration
 void gradientBlue(int wait) { // GRB configuration
     for(int i=0; i<60; i++) { 
       batteri_slange.setPixelColor(i, batteri_regnbue_slange.Color(0, 0, 255));
+      delay(70);
+      batteri_slange.show();
+      delay(wait);
+    }
+}
+
+
+void gradientYellow(int wait) { // GRB configuration
+    for(int i=0; i<60; i++) { 
+      batteri_slange.setPixelColor(i, batteri_regnbue_slange.Color(255,255,51));
       delay(70);
       batteri_slange.show();
       delay(wait);
