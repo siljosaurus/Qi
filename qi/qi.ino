@@ -33,7 +33,6 @@ unsigned long prev = 0;
 int pressure_reading; //variable for storing our reading
 int pressure = 65; //verdi for press
 
-unsigned long varmeTid = 200; // lavere verdi blir til varmere peltier
 int sensitivity = 200;
 
 
@@ -44,53 +43,121 @@ Adafruit_NeoPixel lade_slange = Adafruit_NeoPixel(leds_i_slange, ladeLED,NEO_GRB
 CapacitiveSensor touch = CapacitiveSensor(4,2); // 1M resistor between pins 4 & 2, pin 2 is sensor pin
 CapacitiveSensor touch2 = CapacitiveSensor(8,7); // 1M resistor between pins 8 & 7, pin 7 is sensor pin
 
+
+
+
+
 // TODO: hva slags Type er CapacitiveSensor??? 
 
 void setup() {
+  Serial.println("Running void setup: ");
   Serial.begin(9600);
   
+  Serial.println("Cleared LED-snakes.");
+
+  batteri_slange.begin();
+  batteri_regnbue_slange.begin();
+  solcelle_slange.begin();
+  lade_slange.begin();
+  Serial.println("Began LED-snakes.");
+  
+  touch.set_CS_AutocaL_Millis(0xFFFFFFFF);
+  touch2.set_CS_AutocaL_Millis(0xFFFFFFFF);
+  pinMode(peltier_kald, OUTPUT);
+  pinMode(peltier_varm, OUTPUT);
+  pinMode(lader, OUTPUT);
+
+  // gradientGreen(10);
+
   batteri_slange.clear();
   batteri_regnbue_slange.clear();
   solcelle_slange.clear();
   lade_slange.clear();
   
-  batteri_slange.begin();
-  batteri_regnbue_slange.begin();
-  solcelle_slange.begin();
-  lade_slange.begin();
-  
-  touch.set_CS_AutocaL_Millis(0xFFFFFFFF);
-  touch2.set_CS_AutocaL_Millis(0xFFFFFFFF);
-  pinMode(peltier_kald, OUTPUT);
-  pinMode(peltier_kald, OUTPUT);
-  pinMode(lader, OUTPUT);
-  
-  gradientYellow(10);
-
-  
+  batteri_slange.show();
+  batteri_regnbue_slange.show();
+  solcelle_slange.show();
+  lade_slange.show();
+    
 }
 
 
 void loop(void) {
-  Styr_batteriet();
-   
-  // Kjenn_kulde(peltier_kald);
-  // Kjenn_varme(peltier_varm);
- 
- /*
-  Solcelle(photocellPin);
-  Solcelle(photocellPin2);
-  Solcelle(photocellPin3);
 
-  if (Registrer_touch()) {
-    Gi_varme(peltier_kald);
+ 
+   
+   //pulseWhite(10);
+ 
+  
+   //Styr_batteriet();
+
+  //Test();
+  Solcelle_lader_batteri(1000);
+
+  Solcelle(photocellPin);
+  SolcelleLiten(photocellPin2);
+  SolcelleLiten(photocellPin3);
+
+    if (Registrer_mobil()) {
+    lad();
+    Serial.println("lader");
+    } else {
+      stopp_Lading();
+      Serial.println("lader ikke");
+      }
+
+    if (Registrer_touch()) {
+    Kjenn_varme(peltier_varm);
+    Serial.println("gir varme");
+    } else {
+      Stopp_varme(peltier_varm);
+      Serial.println("stopper varme");
+      }
+
+    if (Registrer_touch2()) {
+    Kjenn_kulde(peltier_kald);
     Serial.println("gir varme");
     } else {
       Stopp_varme(peltier_kald);
       Serial.println("stopper varme");
       }
+      
+  
+}
 
-    */
+void Styr_booleans() {
+  
+  
+  int photocellReading = analogRead(photocellPin);
+  
+
+ }
+
+void Styr_batteriet() {
+  
+      Batteri_fullt(); // Batteriet gløder blått
+      Batteri_halvfullt(); // Batteriet gløder grønt
+      Batteri_lavt(); // Batteriet gløder rødt
+      Batteri_shutdown(); // Rød/lilla strobeeffekt + lyd
+      
+  }
+
+
+void Test() {
+    
+    Solcelle(photocellPin);
+    Solcelle(photocellPin2);
+    Solcelle(photocellPin3);
+/*
+    if (Registrer_touch()) {
+    Kjenn_varme(peltier_varm);
+    Serial.println("gir varme");
+    } else {
+      Stopp_varme(peltier_varm);
+      Serial.println("stopper varme");
+      }
+
+    
      
    if (Registrer_mobil()) {
     lad();
@@ -98,32 +165,20 @@ void loop(void) {
     } else {
       stopp_Lading();
       Serial.println("lader ikke");
-      } 
-     
-   delay(500);
+      } */
 }
 
-void Styr_batteriet() {
-  
-      Batteri_fullt(); // grønn
-      Batteri_halvfullt(); // blå
-      Batteri_lavt(); // rød
-      Batteri_shutdown(); // strobe
-  }
 
-
+unsigned long forrige_oppladning = 0;
 void Batteriet_lades_opp() {
-  batteri_slange.clear();
-  batteri_regnbue_slange.clear();
 
-  // fylles opp 
-   meteorRain(0xff,0xff,0xff,10, 64, true, 50);
+  unsigned long now = millis();
+  int diff = now - forrige_oppladning;
 
-  batteri_slange.clear();
-  batteri_regnbue_slange.clear();
-   
-  // lade opp
-  // theaterChase(238,130,238,150);
+  meteorRain(0xff,0xff,0xff,10, 64, true, 50);
+
+  if (diff > 4000) {
+    forrige_oppladning = now;
    
   if (batteri < 9) {
     batteri += 1;
@@ -131,56 +186,62 @@ void Batteriet_lades_opp() {
     else {
       Batteri_fullt();
       }
-    delay(4000); // 4 sek for å lade opp
-    // batteriet pulserer litt for å indikere at det lades opp
-  }
+    }
+}
+
+
+unsigned long forrige_nedladning = 0;
 
 void Batteriet_lades_ned() {
-   batteri_slange.clear();
-   batteri_regnbue_slange.clear();
- 
-   // lade ned
-   Ladeeffekt(238,130,238, 50); // The first 3 parametres roughly defines the color, the last parameter indicates delay in the loop.
   
-  if (batteri > 0) {
-    batteri -= 1;
-    }
-    else {
+  unsigned long now = millis();
+  
+     cold(10);
+
+ 
+  if (forrige_nedladning - now > 2000){
+
+     if (batteri == 0) {
       Batteri_shutdown();
       }
-    delay(2000); // 2 sek for å lade ned
-    // batteriet blir svakere, ser ut som det draines
+      // lade ned
+      //Ladeeffekt(238,130,238, 50); // The first 3 parametres roughly defines the color, the last parameter indicates delay in the loop.
+     
+      if (batteri > 0) {
+        batteri -= 1;
+      }
+    }
   }
 
-void Batteriet_kollapser() {
-  
-   batteri_slange.clear();
-   batteri_regnbue_slange.clear();
+unsigned long forrige_kollaps = 0;
 
-   // kollaps 
-   
-    //skjer kun ved mobillading
+void Batteriet_kollapser() { 
+  unsigned long now = millis();
+
+  if (forrige_kollaps - now > 8000) {
+
     if (batteri == 0) { //kollaps
-         Strobe(0xff, 0x77, 0x00, 10, 100, 1000);
+            Batteri_shutdown();
 
+        //negativeMeteorRain(255,0,0,10, 64, true, 50);
+        //gradientRed(10);
       }
       else {
         batteri -= 1;
+        meteorRain(255,0,0,10, 64, true, 50);
         }
-     delay(8000); // 10 sek, halvparten av vanlig shutdown
-  }
+    }  
+}
+
 
 void Batteri_fullt(){
 
   if (batteri == 9) {
       batteri_slange.clear();
       batteri_regnbue_slange.clear();
-      gradientGreen(10);
-    }
-    
-  // batteri = 9
-  // masse farger og pulserende, maks brightness
-  }
+      //gradientGreen(10);
+   }
+}
 
 void Batteri_halvfullt(){
 
@@ -200,15 +261,17 @@ void Batteri_lavt(){
   
   if (batteri < 3 and batteri > 1) { 
     batteri_slange.clear();
+    
     batteri_regnbue_slange.clear();
-    gradientRed(10);
+    batteri_slange.setPixelColor(59, batteri_slange.Color(0, 0, 255));
+    batteri_slange.show();
+
     
       }
    
       else {
         batteri -= 1;
-        }  
-  
+        }
  
   // batteri = mellom 3 og 1
   // rød og blinker, lite brightness
@@ -217,9 +280,10 @@ void Batteri_lavt(){
 
 void Batteri_shutdown(){
   // batteri = 0
-
+  
   batteri_slange.clear();
   batteri_regnbue_slange.clear();
+  //Strobe(100, 0, 0, 10, 100, 1000);
   
   for(int i=0; i<leds_i_slange; i++) {
     batteri_slange.setPixelColor(i, batteri_slange.Color(0, 0, 0));
@@ -228,6 +292,17 @@ void Batteri_shutdown(){
   }
 
 boolean Registrer_touch(){
+  long total = touch.capacitiveSensor(30);
+  Serial.println(total);
+
+  if (total > sensitivity) {
+    return true;
+    } else {
+      return false;
+      }
+}
+
+boolean Registrer_touch2(){
   long total = touch2.capacitiveSensor(30);
   Serial.println(total);
 
@@ -238,24 +313,24 @@ boolean Registrer_touch(){
       }
 }
 
-
+int varme = 500;
 void Kjenn_varme(int pin){
   Batteriet_lades_ned();
 
    // varmeTid parameteret kan justeres. Lavere verdi gir et varmere peltier.
-  if (millis() % 2000 > varmeTid) {
+  if (millis() % 2000 > varme) {
     digitalWrite(pin, HIGH);
     } else {
       digitalWrite(pin, LOW);
       }
 }
 
-
+int kulde = 200;
 void Kjenn_kulde(int pin) {
   Batteriet_lades_opp();
   
   // varmeTid parameteret kan justeres. Lavere verdi gir et varmere peltier.
-  if (millis() % 2000 > varmeTid) {
+  if (millis() % 2000 > kulde) {
     digitalWrite(pin, HIGH);
     } else {
       digitalWrite(pin, LOW);
@@ -272,7 +347,6 @@ boolean Registrer_mobil(){
   Serial.println(pressure_reading);
 
   if (pressure_reading > pressure) {
-    //Batteriet_kollapser();
     return true;
     } else {
       return false;
@@ -284,12 +358,74 @@ void lad() {
   
   digitalWrite(lader, HIGH);
   Batteriet_kollapser();
+  mobil_Lader(50);
 }
 
 
 void stopp_Lading() {
   digitalWrite(lader, LOW);
+    
+  for(int i=0; i<leds_i_slange; i++) {
+    lade_slange.setPixelColor(i, lade_slange.Color(0, 0, 0));
+    lade_slange.show();
+    }
 }
+
+
+unsigned long forrige_grryellow = 0;
+int yellow_i = 59;
+
+void Solcelle_lader_batteri(int wait) {
+  unsigned long now = millis();
+
+  if ((now - forrige_grryellow) > wait) {
+    forrige_grryellow = now;
+      if (yellow_i < 60) {
+        Serial.println(yellow_i);
+        solcelle_slange.setPixelColor(yellow_i, batteri_slange.Color(255, 255, 51));
+        solcelle_slange.show();
+        yellow_i = yellow_i - 1;  
+        }
+      else {
+        yellow_i = 0;
+        // batteri ++;
+        solcelle_slange.clear();
+        solcelle_slange.show();
+        }
+    }
+}
+
+unsigned long forrige = 0;
+int i = 0;
+
+void mobil_Lader(int wait) {
+  unsigned long now = millis();
+
+  if ((now - forrige) > wait) {
+    forrige = now;
+      if (i < 60) {
+        Serial.println(i);
+        lade_slange.setPixelColor(i, lade_slange.Color(255, 0, 0));
+        lade_slange.show();
+        i = i + 1;  
+        }
+      else {
+        i = 0;
+        lade_slange.clear();
+        lade_slange.show();
+        }
+    }
+}
+
+void SolcelleLiten(int pin) {
+  int photocellReading = analogRead(pin);
+  Serial.print(pin);
+  Serial.print("  Analog reading = ");
+  Serial.println(photocellReading);
+  if (photocellReading > 60) {
+      Batteriet_lades_opp();
+      }
+  }
 
 
 void Solcelle(int pin){
@@ -297,25 +433,20 @@ void Solcelle(int pin){
   Serial.print(pin);
   Serial.print("  Analog reading = ");
   Serial.println(photocellReading);
-
-  //photocellReading = 1023 - photocellReading;
-
- // for (int i= 0; i<leds_i_slange; i++) {
-    // solcelle_slange.setPixelColor(i, 0, 0, 255);
-    //solcelle_slange.show();}
-
-  //LEDbrightness = map(photocellReading, 0, 210, 0, 255);
-  //Serial.println(LEDbrightness);
   
-    int num_leds_to_show = map(photocellReading, 60, 700, 0, leds_i_solcelleslange);
+    //int num_leds_to_show = map(photocellReading, 60, 700, 0, leds_i_solcelleslange);
+    if (photocellReading > 60) {
+      Batteriet_lades_opp();
+      Solcelle_lader_batteri(1000);
+      }
     //peak = alt lyser
-    Serial.println(num_leds_to_show);
+    /*
     int diff = num_leds_to_show - aktive_leds_i_solcelleslange;
 
     if (diff > 1) {
       unsigned long now = millis();
       if (now - prev > 100) { //har det gått mer enn et sekund siden forrige økning?:
-         diff = 1; //
+         diff = 1;
          prev = now;
         } else {
           diff = 0;
@@ -325,9 +456,8 @@ void Solcelle(int pin){
     num_leds_to_show = aktive_leds_i_solcelleslange + diff;
     aktive_leds_i_solcelleslange = num_leds_to_show;
 
-    if(num_leds_to_show > 40){
-      
-      Batteriet_lades_opp();
+    if(num_leds_to_show > 60){
+      //Batteriet_lades_opp();
     }
 
     for (int i=0; i < leds_i_solcelleslange; i++){
@@ -337,13 +467,14 @@ void Solcelle(int pin){
        else{
           solcelle_slange.setPixelColor(i, solcelle_slange.Color(0, 0, 0));
         }
-  }
+  }*/
      solcelle_slange.show();
 }
 
 
+
 void pulseWhite(uint8_t wait) { // GRBW configuration
-  /*
+  
   for(int j=0; j<256; j++) { // Ramp up from 0 to 255
     // Fill entire strip with white at gamma-corrected brightness level 'j':
     batteri_regnbue_slange.fill(batteri_regnbue_slange.Color(255,255, 255, batteri_regnbue_slange.gamma8(j))); // 100, 100, 100 for mer rolige farger
@@ -351,52 +482,78 @@ void pulseWhite(uint8_t wait) { // GRBW configuration
     batteri_regnbue_slange.show();
     delay(wait);
   }
-  */
-
+  
+/*
   for(int j=255; j>=0; j--) { // Ramp down from 255 to 0
     batteri_regnbue_slange.fill(batteri_regnbue_slange.Color(0, 255, 255, batteri_regnbue_slange.gamma8(j))); // 0, 100, 100 for lolipop farger
     batteri_regnbue_slange.setBrightness(255);
     batteri_regnbue_slange.show();
     delay(wait);
   }
+  */
 }
 
-void gradientRed(int wait) { // GRB configuration
-    for(int i=0; i<60; i++) { 
-      batteri_slange.setPixelColor(i, batteri_regnbue_slange.Color(255, 0, 0));
-      delay(70);
-      batteri_slange.show();
-      delay(wait);
-    }
-}
+void cold(int wait) { // GRB configuration
+  
 
-void gradientGreen(int wait) { // GRB configuration
     for(int i=0; i<60; i++) { 
-      batteri_slange.setPixelColor(i, batteri_regnbue_slange.Color(0, 255, 0));
-      delay(70);
-      batteri_slange.show();
-      delay(wait);
-    }
-}
+      batteri_slange.setPixelColor(i, batteri_slange.Color(0, 0, 10));
+      batteri_slange.show();   // Send the updated pixel colors to the hardware.
+}}
+
+unsigned long forrige_grrblue = 0;
+int blue_i = 0;
 
 void gradientBlue(int wait) { // GRB configuration
-    for(int i=0; i<60; i++) { 
-      batteri_slange.setPixelColor(i, batteri_regnbue_slange.Color(0, 0, 255));
-      delay(70);
-      batteri_slange.show();
-      delay(wait);
+
+  unsigned long now = millis();
+  
+  if ((now - forrige_grrblue) > wait) {
+    forrige_grrblue = now;
+      if (blue_i < 60) {
+        Serial.println(blue_i);
+        batteri_slange.setPixelColor(blue_i, batteri_slange.Color(0, 0, 255));
+        batteri_slange.show();
+        blue_i = blue_i +1;  
+        }
+      else {
+        blue_i = 0;
+        // batteri ++;
+        batteri_slange.clear();
+        batteri_slange.show();
+        }
     }
 }
 
 
-void gradientYellow(int wait) { // GRB configuration
-    for(int i=0; i<60; i++) { 
-      batteri_slange.setPixelColor(i, batteri_regnbue_slange.Color(255,255,51));
-      delay(70);
-      batteri_slange.show();
-      delay(wait);
+
+
+unsigned long forrige_grred = 0;
+int red_i = 60;
+
+void gradientRed(int wait) { // GRB configuration
+
+  unsigned long now = millis();
+  
+  if ((now - forrige_grred) > wait) {
+    forrige_grrblue = now;
+      if (red_i < 60) {
+        batteri_slange.setPixelColor(red_i, batteri_slange.Color(255, 0, 0));
+        batteri_slange.show();
+        red_i = red_i -1;  
+        }
+      else {
+        red_i = 0;
+        // batteri ++;
+        batteri_slange.clear();
+        batteri_slange.show();
+        }
     }
 }
+
+
+
+
 
 void Strobe(byte red, byte green, byte blue, int StrobeCount, int FlashDelay, int EndPause){
   for(int j = 0; j < StrobeCount; j++) {
@@ -407,33 +564,79 @@ void Strobe(byte red, byte green, byte blue, int StrobeCount, int FlashDelay, in
     batteri_regnbue_slange.show();
     delay(FlashDelay);
   }
- 
  delay(EndPause);
 }
 
-void meteorRain(byte red, byte green, byte blue, byte meteorSize, byte meteorTrailDecay, boolean meteorRandomDecay, int SpeedDelay) {  
-   int NUM_LEDS = 60;
-  // slange needs to be clear
 
-  for(int i = 0; i < NUM_LEDS+NUM_LEDS; i++) {
-    // fade brightness all LEDs one step
-    for(int j=0; j<NUM_LEDS; j++) {
-      if( (!meteorRandomDecay) || (random(10)>5) ) {
-        fadeToBlack(j, meteorTrailDecay );        
-      }
-    }
+unsigned long forrige_meteorRain = 0;
+int meteor_i = 60;
+
+void meteorRain(byte red, byte green, byte blue, byte meteorSize, byte meteorTrailDecay, boolean meteorRandomDecay, int SpeedDelay) {
+    
+   int NUM_LEDS = 60;
+   unsigned long now = millis();
    
+    if ((forrige_meteorRain - now) > SpeedDelay) {
+      // slange needs to be clear
+      if (meteor_i < NUM_LEDS) {
+         
+          // fade brightness all LEDs one step
+        for(int j=0; j<NUM_LEDS; j++) {
+          if( (!meteorRandomDecay) || (random(10)>5)) {
+            fadeToBlack(j, meteorTrailDecay );        
+          }
+        }
     // draw meteor
     for(int j = 0; j < meteorSize; j++) {
-      if( ( i-j <NUM_LEDS) && (i-j>=0) ) {
-        batteri_slange.setPixelColor(i-j, red, green, blue);
+      if( ( meteor_i-j <NUM_LEDS) && (meteor_i-j>=0) ) {
+        batteri_slange.setPixelColor(meteor_i-j, red, green, blue);
       }
     }
    
     batteri_slange.show();
-    delay(SpeedDelay);
-  }
+    meteor_i ++;
+    
+    } else {
+      meteor_i = 0;
+      }
+    }
 }
+
+
+unsigned long forrige_negative_meteorRain = 0;
+int neg_meteor_i = 59;
+
+void negativeMeteorRain(byte red, byte green, byte blue, byte meteorSize, byte meteorTrailDecay, boolean meteorRandomDecay, int SpeedDelay) {
+    
+   int NUM_LEDS = 60;
+   unsigned long now = millis();
+   
+    if ((forrige_negative_meteorRain - now) > SpeedDelay) {
+      // slange needs to be clear
+      if (neg_meteor_i < NUM_LEDS) {
+         
+          // fade brightness all LEDs one step
+        for(int j=0; j<NUM_LEDS; j++) {
+          if( (!meteorRandomDecay) || (random(10)>5)) {
+            fadeToBlack(j, meteorTrailDecay );        
+          }
+        }
+    // draw meteor
+    for(int j = 0; j < meteorSize; j++) {
+      if( ( neg_meteor_i-j <NUM_LEDS) && (neg_meteor_i-j>=0) ) {
+        batteri_slange.setPixelColor(neg_meteor_i-j, red, green, blue);
+      }
+    }
+   
+    batteri_slange.show();
+    neg_meteor_i --;
+    
+    } else {
+      neg_meteor_i = 0;
+      }
+    }
+}
+
 
 void fadeToBlack(int ledNo, byte fadeValue) {
  #ifdef ADAFRUIT_NEOPIXEL_H
@@ -457,41 +660,4 @@ void fadeToBlack(int ledNo, byte fadeValue) {
    // FastLED
    leds[ledNo].fadeToBlackBy( fadeValue );
  #endif  
-}
-
-void theaterChase(byte red, byte green, byte blue, int SpeedDelay) {
-  for (int j=0; j<10; j++) {  //do 10 cycles of chasing
-    for (int q=0; q < 3; q++) {
-      for (int i=0; i < 60; i=i+3) {
-        batteri_slange.setPixelColor(i+q, red, green, blue); //turn every third pixel on
-      }
-      batteri_slange.show();
-      delay(SpeedDelay);
-     
-      for (int i=0; i < 60; i=i+3) {
-        batteri_slange.setPixelColor(i+q, 0,0,0); //turn every third pixel off
-      }
-    }
-  }
-}
-
-
- void Ladeeffekt(byte red, byte green, byte blue, int WaveDelay) {
-  int Position=0;
- 
-  for(int j=0; j<60*2; j++) {
-      Position++; // = 0; //Position + Rate;
-      for(int i=0; i<60; i++) {
-        // sine wave, 3 offset waves make a rainbow!
-        //float level = sin(i+Position) * 127 + 128;
-        //setPixel(i,level,0,0);
-        //float level = sin(i+Position) * 127 + 128;
-        batteri_slange.setPixelColor(i,((sin(i+Position) * 127 + 128)/255)*red,
-                   ((sin(i+Position) * 127 + 128)/255)*green,
-                   ((sin(i+Position) * 127 + 128)/255)*blue);
-      }
-      batteri_slange.setBrightness(255);
-      batteri_slange.show();
-      delay(WaveDelay);
-  }
 }
