@@ -1,7 +1,7 @@
 # Qi 
 Made by: Runa Jacobsen, Claudia M. Sikora and me - Silje Marie Flaaten.
 
-![energy-source img](https://github.com/siljosaurus/Qi/img/energy-source.JPG)
+![energy-source img](/img/energy-source.JPG)
 
 /chee/:
 the circulating life force
@@ -18,7 +18,7 @@ In the course we are meant to explore tangible and interactive design in a physi
 
 
 ## Notes on the installation
-![installation img](https://github.com/Qi/img/installation.jpg)
+![installation img](/img/installation.JPG)
 
 The installation consists of six interactive parts, three solar-panels, a phone charger, a freezing surface and a warming surface. 
 In the heart of the installation we designed a light box which represented the "qi" - an energy source, where different light effects reflected the current energy state when interacted with.
